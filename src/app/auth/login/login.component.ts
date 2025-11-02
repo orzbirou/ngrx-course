@@ -7,7 +7,7 @@ import {AuthService} from "../auth.service";
 import {tap} from "rxjs/operators";
 import {noop} from "rxjs";
 import {Router} from "@angular/router";
-import { login } from '../auth.actions';
+import { login, logout } from '../auth.actions';
 import { AuthState } from '../reducers';
 
 @Component({
@@ -52,6 +52,4 @@ export class LoginComponent implements OnInit {
                 () => alert('Login Failed')
             );
   }
-
 }
-
