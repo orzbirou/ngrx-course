@@ -1,37 +1,23 @@
-import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot} from '@angular/router';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {AppState} from '../reducers';
-import {select, Store} from '@ngrx/store';
-import {isLoggedIn} from './auth.selectors';
-import {tap} from 'rxjs/operators';
-import {login, logout} from './auth.actions';
-
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
+import { Injectable, inject } from '@angular/core';
+import { AuthStore } from './auth.store';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class AuthGuard {
 
-    constructor(
-        private store: Store<AppState>,
-        private router: Router) {
-
-    }
+    private authStore = inject(AuthStore);
+    private router = inject(Router);
 
     canActivate(
         route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot): Observable<boolean> {
+        state: RouterStateSnapshot): boolean {
 
-        return this.store
-            .pipe(
-                select(isLoggedIn),
-                tap(loggedIn => {
-                    if (!loggedIn) {
-                        this.router.navigateByUrl('/login');
-                    }
-                })
-            )
-
-
+        // Signals are synchronous — no need for an Observable chain
+        if (!this.authStore.isLoggedIn()) {
+            this.router.navigateByUrl('/login');
+            return false;
+        }
+        return true;
     }
 
 }

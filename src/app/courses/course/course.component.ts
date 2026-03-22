@@ -1,49 +1,51 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {Course} from '../model/course';
-import {Observable} from 'rxjs';
-import {Lesson} from '../model/lesson';
-import {concatMap, delay, filter, first, map, shareReplay, tap, withLatestFrom} from 'rxjs/operators';
-import {CoursesHttpService} from '../services/courses-http.service';
-
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
+import { Course } from "../model/course";
+import { CoursesStore } from "../store/courses.store";
+import { LessonsStore } from "../store/lessons.store";
 
 @Component({
-  selector: 'course',
-  templateUrl: './course.component.html',
-  styleUrls: ['./course.component.css']
+  selector: "course",
+  templateUrl: "./course.component.html",
+  styleUrls: ["./course.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  // Provide LessonsStore here (not at module level) so each navigation to a
+  // course route creates a fresh lessons state — no stale lessons from other courses
+  providers: [LessonsStore]
 })
 export class CourseComponent implements OnInit {
 
-  course$: Observable<Course>;
+  private coursesStore = inject(CoursesStore);
+  readonly lessonsStore = inject(LessonsStore);
+  private route = inject(ActivatedRoute);
 
-  lessons$: Observable<Lesson[]>;
+  private courseUrl = this.route.snapshot.paramMap.get("courseUrl");
 
-  displayedColumns = ['seqNo', 'description', 'duration'];
+  // Derived signal: look up the current course from the store by URL
+  readonly course = computed(() =>
+    this.coursesStore.entities().find(c => c.url === this.courseUrl)
+  );
 
+  // Derived signal: filter lessons belonging to this course
+  readonly courseLessons = computed(() => {
+    const c = this.course();
+    if (!c) return [];
+    return this.lessonsStore.entities().filter(l => l.courseId === c.id);
+  });
+
+  displayedColumns = ["seqNo", "description", "duration"];
   nextPage = 0;
 
-  constructor(
-    private coursesService: CoursesHttpService,
-    private route: ActivatedRoute) {
-
-  }
-
   ngOnInit() {
-
-    const courseUrl = this.route.snapshot.paramMap.get("courseUrl");
-
-    this.course$ = this.coursesService.findCourseByUrl(courseUrl);
-
-    this.lessons$ = this.course$.pipe(
-      concatMap(course => this.coursesService.findLessons(course.id)),
-      tap(console.log)
-    );
-
+    const course = this.course();
+    if (course) {
+      this.loadLessonsPage(course);
+    }
   }
-
 
   loadLessonsPage(course: Course) {
-
+    this.lessonsStore.loadPage(course.id, this.nextPage);
+    this.nextPage += 1;
   }
-
 }
+

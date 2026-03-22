@@ -58,18 +58,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "angular-ngrx-course:build"
+            "buildTarget": "angular-ngrx-course:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "angular-ngrx-course:build:production"
+              "buildTarget": "angular-ngrx-course:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "angular-ngrx-course:build"
+            "buildTarget": "angular-ngrx-course:build"
           }
         },
         "test": {
@@ -106,7 +106,6 @@
       }
     }
   },
-  "defaultProject": "angular-ngrx-course",
   "schematics": {
     "@ngrx/schematics:component": {
       "prefix": "",
@@ -117,7 +116,9 @@
     }
   },
   "cli": {
-    "defaultCollection": "@ngrx/schematics",
-    "analytics": "f55f4a8f-5057-4bd1-bc62-645d74960959"
+    "analytics": "f55f4a8f-5057-4bd1-bc62-645d74960959",
+    "schematicCollections": [
+      "@ngrx/schematics"
+    ]
   }
 }

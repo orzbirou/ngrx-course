@@ -41,8 +41,15 @@ export class CoursesHttpService {
 
 
     saveCourse(courseId: string | number, changes: Partial<Course>) {
-        return this.http.put('/api/course/' + courseId, changes);
+        return this.http.put<Course>('/api/course/' + courseId, changes);
     }
 
+    createCourse(course: Partial<Course>): Observable<Course> {
+        return this.http.post<Course>('/api/course', course);
+    }
+
+    deleteCourse(courseId: number): Observable<any> {
+        return this.http.delete(`/api/course/${courseId}`);
+    }
 
 }

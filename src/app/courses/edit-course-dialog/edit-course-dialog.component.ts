@@ -1,18 +1,19 @@
-import {Component, Inject} from '@angular/core';
-import {MAT_DIALOG_DATA, MatDialogRef} from '@angular/material/dialog';
-import {Course} from '../model/course';
-import {FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {Observable} from 'rxjs';
-import {CoursesHttpService} from '../services/courses-http.service';
+import { ChangeDetectionStrategy, Component, Inject, inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Course } from '../model/course';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { CoursesStore } from '../store/courses.store';
 
 @Component({
   selector: 'course-dialog',
   templateUrl: './edit-course-dialog.component.html',
-  styleUrls: ['./edit-course-dialog.component.css']
+  styleUrls: ['./edit-course-dialog.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+  
 })
 export class EditCourseDialogComponent {
 
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   dialogTitle: string;
 
@@ -20,13 +21,12 @@ export class EditCourseDialogComponent {
 
   mode: 'create' | 'update';
 
-  loading$:Observable<boolean>;
+  private coursesStore = inject(CoursesStore);
 
   constructor(
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     private dialogRef: MatDialogRef<EditCourseDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) data,
-    private coursesService: CoursesHttpService) {
+    @Inject(MAT_DIALOG_DATA) data) {
 
     this.dialogTitle = data.dialogTitle;
     this.course = data.course;
@@ -63,13 +63,20 @@ export class EditCourseDialogComponent {
       ...this.form.value
     };
 
-    this.coursesService.saveCourse(course.id, course)
-      .subscribe(
-        () => this.dialogRef.close()
-      )
+    if (this.mode == 'update') {
+      // updateCourse is optimistic: state updates immediately, HTTP confirms in background
+      this.coursesStore.updateCourse(course);
+      this.dialogRef.close();
+    }
 
+    if (this.mode == 'create') {
+      // addCourse returns an Observable so we can close the dialog after the server responds
+      this.coursesStore.addCourse(course).subscribe(newCourse => {
+        console.log('new course:', newCourse);
+        this.dialogRef.close();
+      });
+    }
 
   }
-
 
 }

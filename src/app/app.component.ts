@@ -1,11 +1,6 @@
-import {Component, OnInit} from '@angular/core';
-import {select, Store} from '@ngrx/store';
-import {Observable} from 'rxjs';
-import {distinctUntilChanged, map} from 'rxjs/operators';
-import {NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router} from '@angular/router';
-import {AppState} from './reducers';
-import {isLoggedIn, isLoggedOut} from './auth/auth.selectors';
-import {login, logout} from './auth/auth.actions';
+import { Component, OnInit, inject } from '@angular/core';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { AuthStore } from './auth/auth.store';
 
 @Component({
     selector: 'app-root',
@@ -16,21 +11,17 @@ export class AppComponent implements OnInit {
 
     loading = true;
 
-    isLoggedIn$: Observable<boolean>;
+    // Expose the store so the template can call authStore.isLoggedIn() and authStore.isLoggedOut()
+    readonly authStore = inject(AuthStore);
 
-    isLoggedOut$: Observable<boolean>;
-
-    constructor(private router: Router,
-                private store: Store<AppState>) {
-
-    }
+    constructor(private router: Router) {}
 
     ngOnInit() {
-
-        const userProfile = localStorage.getItem("user");
+        const userProfile = localStorage.getItem('user');
 
         if (userProfile) {
-            this.store.dispatch(login({user: JSON.parse(userProfile)}));
+            // Restore session from localStorage on app startup
+            this.authStore.login(JSON.parse(userProfile));
         }
 
         this.router.events.subscribe(event => {
@@ -39,7 +30,6 @@ export class AppComponent implements OnInit {
                     this.loading = true;
                     break;
                 }
-
                 case event instanceof NavigationEnd:
                 case event instanceof NavigationCancel:
                 case event instanceof NavigationError: {
@@ -51,23 +41,11 @@ export class AppComponent implements OnInit {
                 }
             }
         });
-
-        this.isLoggedIn$ = this.store
-            .pipe(
-                select(isLoggedIn)
-            );
-
-        this.isLoggedOut$ = this.store
-            .pipe(
-                select(isLoggedOut)
-            );
-
     }
 
     logout() {
-
-        this.store.dispatch(logout());
-
+        // AuthStore.logout() handles both localStorage cleanup and navigation
+        this.authStore.logout();
     }
 
 }

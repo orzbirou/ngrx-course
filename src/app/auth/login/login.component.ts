@@ -1,15 +1,10 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import {FormBuilder, FormGroup, Validators} from "@angular/forms";
-
-import {Store} from "@ngrx/store";
-
+import { Component, OnInit, inject } from '@angular/core';
+import {UntypedFormBuilder, UntypedFormGroup, Validators} from "@angular/forms";
 import {AuthService} from "../auth.service";
 import {tap} from "rxjs/operators";
 import {noop} from "rxjs";
 import {Router} from "@angular/router";
-import {AppState} from '../../reducers';
-import {login} from '../auth.actions';
-import {AuthActions} from '../action-types';
+import { AuthStore } from '../auth.store';
 
 @Component({
   selector: 'login',
@@ -18,13 +13,12 @@ import {AuthActions} from '../action-types';
 })
 export class LoginComponent implements OnInit {
 
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   constructor(
-      private fb:FormBuilder,
+      private fb:UntypedFormBuilder,
       private auth: AuthService,
-      private router:Router,
-      private store: Store<AppState>) {
+      private router:Router) {
 
       this.form = fb.group({
           email: ['test@angular-university.io', [Validators.required]],
@@ -47,7 +41,7 @@ export class LoginComponent implements OnInit {
 
                   console.log(user);
 
-                  this.store.dispatch(login({user}));
+                  inject(AuthStore).login(user);
 
                   this.router.navigateByUrl('/courses');
 
